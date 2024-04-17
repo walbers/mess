@@ -4,13 +4,11 @@ use std::io::{BufReader, BufRead};
 use std::collections::HashMap;
 use std::env;
 use ini::Ini;
-use serenity::{
-    async_trait,
-    model::{channel::Message, gateway::Ready, id::UserId},
-    prelude::*,
-};
+use serenity::http::Http as SerenityHttp;
+use serenity::model::id::ChannelId;
 
-const AVAILABLE_MESSENGERS: [&str; 1] = ["desktop"];
+const AVAILABLE_MESSENGERS: [&str; 3] = ["desktop", "discord", "text"];
+
 
 fn get_mess_env_settings() -> HashMap<String, String> {
     let mut mess_variables: HashMap<String, String> = HashMap::new();
@@ -107,8 +105,37 @@ fn send_desktop_message(program_name: &String, duration: u64) {
     let _status = child.wait().expect("Command wasn't running");
 }
 
-async fn send_discord_message(program_name: &String, duration: u64, mess_settings: HashMap<String, String>) {
+async fn send_discord_message(program_name: &String, duration: u64, mess_settings: &HashMap<String, String>) {
+    let token = mess_settings.get("DISCORD_TOKEN").unwrap();
+    let channel_id = mess_settings.get("DISCORD_CHANNEL_ID").unwrap();
+    let message = format!("Your program {} has finished after {} minutes", program_name, duration);
 
+    let http = SerenityHttp::new(&token);
+    let channel = ChannelId::new(channel_id.parse::<u64>().unwrap());
+    match channel.say(&http, &message).await {
+        Ok(message) => println!("Message sent to Discord: {:?}", message.content),
+        Err(why) => eprintln!("Error sending message to Discord: {:?}", why),
+    }
+}
+
+async fn send_text_message(program_name: &String, duration: u64, mess_settings: &HashMap<String, String>) {
+    let sender = mess_settings.get("TWILIO_SENDER").unwrap();
+    let receiver = mess_settings.get("TWILIO_RECEIVER").unwrap();
+    let account = mess_settings.get("TWILIO_ACCOUNT").unwrap();
+    let api_key = mess_settings.get("TWILIO_API_KEY").unwrap();
+    let message = format!("Your program {} has finished after {} minutes", program_name, duration);
+
+    let form_data = [("To", receiver), ("From", sender), ("Body", &message)];
+
+    let client = reqwest::Client::new();
+    let res = client.post(
+        format!("https://api.twilio.com/2010-04-01/Accounts/{}/Messages.json", account))
+        .form(&form_data)
+        // .body("the exact body that is sent")
+        .basic_auth(account, Some(api_key))
+        .send()
+        .await;
+    println!("Result {:?}", res)
 }
 
 async fn send_message(program_name: &String, duration: u64, mess_settings: HashMap<String, String>) {
@@ -116,18 +143,20 @@ async fn send_message(program_name: &String, duration: u64, mess_settings: HashM
     for messenger in messengers {
         match &messenger as &str {
             "desktop" => send_desktop_message(&program_name, duration),
-            "discord" => send_discord_message(&program_name, duration, mess_settings),
+            "discord" => send_discord_message(&program_name, duration, &mess_settings).await,
+            "text" => send_text_message(&program_name, duration, &mess_settings).await,
             _ => eprint!("The messenger {} doesn't exist. Skipping...", messenger),
         }
     }
 }
+
 #[tokio::main]
 async fn main() {
     // HANDLE case just `mess` or `mess --help --version and --test to make sure message works`
 
     // collect arguements and settings
     let mess_settings = get_settings();
-    let messengers = get_messengers(&mess_settings);
+    let _messengers = get_messengers(&mess_settings);
     let duration_allowed = get_duration_allowed(&mess_settings);
     let args_passed: Vec<String> = env::args().collect();
 
@@ -141,7 +170,7 @@ async fn main() {
     println!("Duration: {:?}", duration);
     println!("Duration allowed: {:?}", duration_allowed);
     if duration.as_secs() >= duration_allowed { // TODO: *60
-        send_message(&args_passed[1], duration.as_secs(), mess_settings);
+        send_message(&args_passed[1], duration.as_secs(), mess_settings).await;
     } else {
         println!("Execution was less than allowed duration. No message sent.");
     }

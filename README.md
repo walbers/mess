@@ -27,10 +27,9 @@ Building projects can take a long time and I wanted to get a notification when t
 - Desktop notifications
     - Will work in WSL with [wsl-notify-send](https://github.com/stuartleeks/wsl-notify-send)
 - Discord
+- Text
+    - requires twilio API key
 
 ### Future
 
 - Slack
-- Push notification
-- Text
-    - requires twilio API key
