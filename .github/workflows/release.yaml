@@ -1,0 +1,60 @@
+name: Build and create release
+
+on:
+  release:
+    types:
+      - created
+
+
+jobs:
+  publish-mess:
+    name: Build and publish for {{ matrix.os }} on {{ matrix.architecture }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [unknown-linux-gnu, apple-darwin]
+        architecture: [x86_64, aarch64]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+          target: ${{ matrix.architecture }}-${{ matrix.os }}
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target ${{ matrix.architecture }}-${{ matrix.os }}
+      - name: Package
+        run: |
+          mkdir -p output/${{ matrix.architecture }}-${{ matrix.os }}
+          cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess output/${{ matrix.architecture }}-${{ matrix.os }}
+          tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz
+          asset_name: mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz
+          asset_content_type: application/gzip
+  # publish-mess-install:
+  #   name: Publish installer
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     - name: Upload
+  #       uses: actions/upload-release-asset@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         upload_url: ${{ github.event.release.upload_url }}
+  #         asset_path: mess/install.sh
+  #         asset_name: install.sh
+  #         asset_content_type: application/gzip
