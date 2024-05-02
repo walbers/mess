@@ -5,7 +5,6 @@ on:
     types:
       - created
 
-
 jobs:
   publish-mess:
     name: Build and publish mess
@@ -33,7 +32,7 @@ jobs:
         if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libssl-dev
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu openssl libssl-dev:arm64
       - name: Build
         uses: actions-rs/cargo@v1
         with:
