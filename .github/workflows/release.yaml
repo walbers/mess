@@ -8,13 +8,17 @@ on:
 
 jobs:
   publish-mess:
-    name: Build and publish for {{ matrix.os }} on {{ matrix.architecture }}
+    name: Build and publish mess
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [unknown-linux-gnu, apple-darwin]
-        architecture: [x86_64, aarch64]
+        os:
+          - unknown-linux-gnu
+          # - apple-darwin
+        architecture:
+          - x86_64
+          - aarch64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -25,6 +29,11 @@ jobs:
           override: true
           profile: minimal
           target: ${{ matrix.architecture }}-${{ matrix.os }}
+      - name: Install Dependencies
+        if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
       - name: Build
         uses: actions-rs/cargo@v1
         with:
@@ -34,15 +43,15 @@ jobs:
         run: |
           mkdir -p output/${{ matrix.architecture }}-${{ matrix.os }}
           cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess output/${{ matrix.architecture }}-${{ matrix.os }}
-          tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess
+          tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess
       - name: Upload
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz
-          asset_name: mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz
+          asset_path: ./output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
+          asset_name: mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
           asset_content_type: application/gzip
   # publish-mess-install:
   #   name: Publish installer
