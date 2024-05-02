@@ -11,6 +11,7 @@ jobs:
     name: Build and publish for {{ matrix.os }} on {{ matrix.architecture }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         os: [unknown-linux-gnu, apple-darwin]
         architecture: [x86_64, aarch64]
