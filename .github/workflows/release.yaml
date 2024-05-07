@@ -43,7 +43,7 @@ jobs:
         if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
         uses: addnab/docker-run-action@v3
         with:
-          image: essense/rust-musl-cross:aarch64-musl
+          image: messense/rust-musl-cross:aarch64-musl
           options: --privileged
           run: |
             rustup target add ${{ matrix.architecture }}-${{ matrix.os }}
