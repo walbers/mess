@@ -33,8 +33,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu openssl libssl-dev
+          sudo apt-get install -y libssl-dev:aarch64 || true
       - name: Build
         uses: actions-rs/cargo@v1
+        env:
+          PKG_CONFIG_ALLOW_CROSS: 1
+          PKG_CONFIG_PATH: "/usr/lib/aarch64-linux-gnu/pkgconfig"
+          OPENSSL_DIR: "/usr/aarch64-linux-gnu"
         with:
           command: build
           args: --release --target ${{ matrix.architecture }}-${{ matrix.os }}
@@ -52,6 +57,7 @@ jobs:
           asset_path: ./output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
           asset_name: mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
           asset_content_type: application/gzip
+
   # publish-mess-install:
   #   name: Publish installer
   #   runs-on: ubuntu-latest
