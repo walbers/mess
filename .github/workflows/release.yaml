@@ -44,7 +44,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: messense/rust-musl-cross:aarch64-musl
-          options: --privileged
+          options: --privileged -v ${{ github.workspace }}:/home/rust/src
           run: |
             rustup target add ${{ matrix.architecture }}-${{ matrix.os }}
             cargo build --release --target ${{ matrix.architecture }}-${{ matrix.os }}
