@@ -53,7 +53,7 @@ jobs:
           options: --privileged -v ${{ github.workspace }}:/home/rust/src
           run: |
             sudo apt update
-            sudo apt install pkg-config libssl-dev
+            sudo apt install -y pkg-config libssl-dev
             rustup target add ${{ matrix.architecture }}-${{ matrix.os }}
             cargo build --release --target ${{ matrix.architecture }}-${{ matrix.os }}
             mkdir -p /github/workspace/target/artifacts
