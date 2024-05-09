@@ -1,9 +1,11 @@
 name: Build and create release
 
+# on:
+#   release:
+#     types:
+#       - created
 on:
-  release:
-    types:
-      - created
+  push
 
 jobs:
   publish-mess:
@@ -50,6 +52,8 @@ jobs:
           image: messense/rust-musl-cross:aarch64-musl
           options: --privileged -v ${{ github.workspace }}:/home/rust/src
           run: |
+            sudo apt update
+            sudo apt install pkg-config libssl-dev
             rustup target add ${{ matrix.architecture }}-${{ matrix.os }}
             cargo build --release --target ${{ matrix.architecture }}-${{ matrix.os }}
             mkdir -p /github/workspace/target/artifacts
