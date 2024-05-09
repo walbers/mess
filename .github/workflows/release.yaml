@@ -18,7 +18,7 @@ jobs:
           - unknown-linux-gnu
           # - apple-darwin
         architecture:
-          - x86_64
+          # - x86_64
           - aarch64
     steps:
       - name: Checkout code
@@ -30,54 +30,56 @@ jobs:
           override: true
           profile: minimal
           target: ${{ matrix.architecture }}-${{ matrix.os }}
-      - name: Install Dependencies
-        if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
-        run: |
-          sudo apt update
-          sudo apt install pkg-config libssl-dev
-          # sudo dpkg --add-architecture arm64
-          # sudo apt-get update
+      # - name: Install Dependencies
+      #   if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
+      #   run: |
+      #     sudo apt update
+      #     sudo apt install -y pkg-config libssl-dev
+      #     # sudo dpkg --add-architecture arm64
+      #     # sudo apt-get update
 
-          # sudo apt-get install -y crossbuild-essential-arm64
-          # sudo apt-get install -y openssl:arm64 libssl-dev:arm64 pkg-config
+      #     # sudo apt-get install -y crossbuild-essential-arm64
+      #     # sudo apt-get install -y openssl:arm64 libssl-dev:arm64 pkg-config
 
-          # # sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu openssl libssl-dev
-          # # sudo apt-get install -y libssl-dev:aarch64 || true
+      #     # # sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu openssl libssl-dev
+      #     # # sudo apt-get install -y libssl-dev:aarch64 || true
       - name: Set up Docker Container
         if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
         uses: addnab/docker-run-action@v3
-        env:
-          PKG_CONFIG_ALLOW_CROSS: 1
+        # env:
+        #   PKG_CONFIG_ALLOW_CROSS: 1
         with:
           image: messense/rust-musl-cross:aarch64-musl
           options: --privileged -v ${{ github.workspace }}:/home/rust/src
           run: |
             sudo apt update
             sudo apt install -y pkg-config libssl-dev
+            export PKG_CONFIG_PATH=/
+            export PKG_CONFIG_ALLOW_CROSS=1
             rustup target add ${{ matrix.architecture }}-${{ matrix.os }}
             cargo build --release --target ${{ matrix.architecture }}-${{ matrix.os }}
-            mkdir -p /github/workspace/target/artifacts
-            cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/* /github/workspace/target/artifacts
+            # mkdir -p /github/workspace/target/artifacts
+            # cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/* /github/workspace/target/artifacts
 
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target ${{ matrix.architecture }}-${{ matrix.os }}
-      - name: Package
-        run: |
-          mkdir -p output/${{ matrix.architecture }}-${{ matrix.os }}
-          cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess output/${{ matrix.architecture }}-${{ matrix.os }}
-          tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess
-      - name: Upload
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
-          asset_name: mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
-          asset_content_type: application/gzip
+      # - name: Build
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     command: build
+      #     args: --release --target ${{ matrix.architecture }}-${{ matrix.os }}
+      # - name: Package
+      #   run: |
+      #     mkdir -p output/${{ matrix.architecture }}-${{ matrix.os }}
+      #     cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess output/${{ matrix.architecture }}-${{ matrix.os }}
+      #     tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess
+      # - name: Upload
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ github.event.release.upload_url }}
+      #     asset_path: ./output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
+      #     asset_name: mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
+      #     asset_content_type: application/gzip
 
   # publish-mess-install:
   #   name: Publish installer
