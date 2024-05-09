@@ -28,17 +28,19 @@ jobs:
           override: true
           profile: minimal
           target: ${{ matrix.architecture }}-${{ matrix.os }}
-      # - name: Install Dependencies
-      #   if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
-      #   run: |
-      #     sudo dpkg --add-architecture arm64
-      #     sudo apt-get update
+      - name: Install Dependencies
+        if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
+        run: |
+          sudo apt update
+          sudo apt install pkg-config
+          # sudo dpkg --add-architecture arm64
+          # sudo apt-get update
 
-      #     sudo apt-get install -y crossbuild-essential-arm64
-      #     sudo apt-get install -y openssl:arm64 libssl-dev:arm64 pkg-config
+          # sudo apt-get install -y crossbuild-essential-arm64
+          # sudo apt-get install -y openssl:arm64 libssl-dev:arm64 pkg-config
 
-      #     # sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu openssl libssl-dev
-      #     # sudo apt-get install -y libssl-dev:aarch64 || true
+          # # sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu openssl libssl-dev
+          # # sudo apt-get install -y libssl-dev:aarch64 || true
       - name: Set up Docker Container
         if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
         uses: addnab/docker-run-action@v3
