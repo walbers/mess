@@ -57,6 +57,8 @@ jobs:
             export PKG_CONFIG_ALLOW_CROSS=1
             export PKG_CONFIG_PATH=/usr/local/musl/aarch64-unknown-linux-musl/lib/pkgconfig:/usr/local/musl/lib/pkgconfig
             export OPENSSL_DIR=/usr/local/musl/aarch64-unknown-linux-musl
+            export OPENSSL_INCLUDE_DIR=/usr/local/musl/aarch64-unknown-linux-musl/include
+            export OPENSSL_LIB_DIR=/usr/local/musl/aarch64-unknown-linux-musl/lib
             rustup target add ${{ matrix.architecture }}-${{ matrix.os }}
             cargo build --release --target ${{ matrix.architecture }}-${{ matrix.os }}
             # mkdir -p /github/workspace/target/artifacts
