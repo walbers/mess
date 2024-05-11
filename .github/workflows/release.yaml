@@ -5,27 +5,50 @@ on:
     types:
       - created
 
-
 jobs:
   publish-mess:
-    name: Build and publish for {{ matrix.os }} on {{ matrix.architecture }}
+    name: Build and publish mess
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [unknown-linux-gnu, apple-darwin]
-        architecture: [x86_64, aarch64]
+        os:
+          - unknown-linux-gnu
+          # - apple-darwin
+        architecture:
+          - x86_64
+          - aarch64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Setup rust
+        if: matrix.architecture == 'x86_64'
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           override: true
           profile: minimal
           target: ${{ matrix.architecture }}-${{ matrix.os }}
+      - name: Set up Docker Container
+        if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
+        uses: addnab/docker-run-action@v3
+        with:
+          image: rust:latest
+          options: -v ${{ github.workspace }}:/home
+          run: |
+            cd /home
+            apt-get update
+            apt-get install -y gcc-aarch64-linux-gnu
+            rustup target add aarch64-unknown-linux-gnu
+            mkdir .cargo
+            cat <<EOL > .cargo/config.toml
+            [target.aarch64-unknown-linux-gnu]
+            linker = "aarch64-linux-gnu-gcc"
+            EOL
+            cat .cargo/config.toml
+            cargo build --release --target aarch64-unknown-linux-gnu
       - name: Build
+        if: matrix.architecture == 'x86_64'
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -33,29 +56,32 @@ jobs:
       - name: Package
         run: |
           mkdir -p output/${{ matrix.architecture }}-${{ matrix.os }}
+          strip target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess
           cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess output/${{ matrix.architecture }}-${{ matrix.os }}
-          tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess
+          cp config output/${{ matrix.architecture }}-${{ matrix.os }}
+          tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess
       - name: Upload
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz
-          asset_name: mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref }}.tar.gz
+          asset_path: ./output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
+          asset_name: mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz
           asset_content_type: application/gzip
-  # publish-mess-install:
-  #   name: Publish installer
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #     - name: Upload
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url: ${{ github.event.release.upload_url }}
-  #         asset_path: mess/install.sh
-  #         asset_name: install.sh
-  #         asset_content_type: application/gzip
+
+  publish-mess-install:
+    name: Publish installer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Upload
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: mess/install.sh
+          asset_name: install.sh
+          asset_content_type: application/x-sh
