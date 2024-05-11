@@ -49,9 +49,8 @@ jobs:
             EOL
             cat .cargo/config.toml
             cargo build --release --target aarch64-unknown-linux-gnu
-            mkdir -p /github/workspace/target/artifacts
-            cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/* /github/workspace/target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess
-
+            # mkdir artifacts
+            # cp target/aarch64-unknown-linux-gnu/release/* artifacts
       - name: Build
         if: matrix.architecture == 'x86_64'
         uses: actions-rs/cargo@v1
