@@ -1,5 +1,5 @@
 DURATION=0
-MESSENGERS="desktop,discord,text"
+MESSENGERS="desktop"
 
 DISCORD_TOKEN=""
 DISCORD_CHANNEL_ID=""
