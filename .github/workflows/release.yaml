@@ -8,7 +8,7 @@ on:
 jobs:
   publish-mess:
     name: Build and publish mess
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
@@ -59,7 +59,7 @@ jobs:
           strip target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess
           cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess output/${{ matrix.architecture }}-${{ matrix.os }}
           cp config output/${{ matrix.architecture }}-${{ matrix.os }}
-          tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess
+          tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess config
       - name: Upload
         uses: actions/upload-release-asset@v1
         env:

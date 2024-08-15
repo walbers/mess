@@ -23,7 +23,7 @@ fn get_mess_env_settings() -> HashMap<String, String> {
 
 fn get_settings() -> HashMap<String, String> {
     let home_dir = env::var("HOME").unwrap();
-    let config_path = format!("{}/.mess.ini", home_dir);
+    let config_path = format!("{}/.mess/config", home_dir);
     let conf = Ini::load_from_file(config_path).unwrap();
 
     let mut mess_settings: HashMap<String, String> = HashMap::new();

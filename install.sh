@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="0.1.0"
+VERSION="test"
 RELEASE_URL="https://github.com/walbers/mess/releases/download/$VERSION"
 INSTALL_DIR="/usr/local/bin"
 
@@ -22,17 +22,18 @@ function wsl_notify_install() {
 
 function download_and_install() {
     local tar_file="$1.tar.gz"
-    local mess_file="$1/mess"
-    local config_file="$1/mess.config"
+    local mess_file="mess/mess"
+    local config_file="mess/mess.config"
     echo "Downloading $tar_file..."
-    curl -L "$RELEASE_URL/$tar_file" -o "$tar_file"
+    curl -fsSL "$RELEASE_URL/$tar_file" -o "$tar_file"
     if [ $? -ne 0 ]; then
         echo "Failed to download $RELEASE_URL/$tar_file"
         exit 1
     fi
 
     echo "Extracting $tar_file..."
-    tar -xzf "$tar_file"
+    mkdir mess
+    tar -xzf "$tar_file" -C mess
 
     if [ $? -ne 0 ]; then
         echo "Failed to extract $tar_file"
@@ -63,6 +64,7 @@ KERNEL="$(uname -r)"
 case "$OS" in
     Linux*)
         MESS_VERSION="mess-$ARCH-unknown-linux-gnu-$VERSION"
+        ;;
     *)
         echo "Unsupported OS: $OS"
         exit 1

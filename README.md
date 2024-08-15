@@ -1,8 +1,8 @@
 # Mess
----
+
 This is a CLI tool to send you a [notification](#integrations) after your command is finished.
 
-I built this because I often have long running compilations, docker builds, ansible jobs, etc. and wanted to get notified when they are done instead of baby sitting them. It's especially horrible when you expect something to run for a few hours and it ends 20 minutes into it.
+I built this because I often have long running compilations, docker builds, ansible jobs, etc. and wanted to get notified when they are done instead of baby sitting them. It's especially horrible when you expect something to run for a few hours and it errors 20 minutes in.
 
 By default it will send desktop notifications and not have any delay.
 
@@ -30,6 +30,7 @@ Use it just like you would the `time` command
 ### Current
 
 - Desktop notifications
+    - Uses linux's `notify-send`
     - Will work in WSL with [wsl-notify-send](https://github.com/stuartleeks/wsl-notify-send)
 - Text
     - requires twilio API key
