@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="test"
+VERSION="0.1.0"
 RELEASE_URL="https://github.com/walbers/mess/releases/download/$VERSION"
 INSTALL_DIR="/usr/local/bin"
 
