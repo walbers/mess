@@ -28,10 +28,8 @@ fn get_settings() -> HashMap<String, String> {
     let conf = Ini::load_from_file(config_path).unwrap();
 
     let mut mess_settings: HashMap<String, String> = HashMap::new();
-    for (sec, prop) in &conf {
-        println!("Section: {:?}", sec);
+    for (_sec, prop) in &conf {
         for (key, value) in prop.iter() {
-            println!("{:?}:{:?}", key, value);
             mess_settings.insert(key.to_string(), value.to_string());
         }
     }
@@ -51,7 +49,7 @@ fn get_messengers(mess_variables: &HashMap<String, String>) -> Vec<String> {
     }
 
     let messengers_str =  mess_variables.get("MESSENGERS").unwrap();
-    let messengers: Vec<String> = messengers_str.split(',').map(|s| s.to_string()).collect();
+    let messengers: Vec<String> = messengers_str.split(',').map(|s| s.to_string().replace(" ", "")).collect();
     for messenger in &messengers {
         if !AVAILABLE_MESSENGERS.contains(&messenger.as_str()) {
             eprintln!("Messenger {} not available!", messenger);
@@ -86,7 +84,7 @@ fn run_the_program(program_to_run: &[String]) {
     let reader = BufReader::new(stdout);
     for line in reader.lines() {
         match line {
-            Ok(line) => println!("Output: {}", line),
+            Ok(_) => {},
             Err(e) => eprintln!("Error reading line: {}", e),
         }
     }
@@ -95,8 +93,8 @@ fn run_the_program(program_to_run: &[String]) {
 }
 
 fn send_beep_message() {
-    let uname = uname();
-    let kernel_name = uname.release();
+    let uname = uname().expect("Failed to get uname");
+    let kernel_name = uname.release().to_str().expect("Failed to get kernel name");
     if kernel_name.contains("WSL") {
         Command::new("powershell.exe")
         .arg("-c")
@@ -174,7 +172,7 @@ async fn main() {
 
     // collect arguements and settings
     let mess_settings = get_settings();
-    let _messengers = get_messengers(&mess_settings);
+    let _messengers = get_messengers(&mess_settings); // to check if messengers are valid
     let duration_allowed = get_duration_allowed(&mess_settings);
     let args_passed: Vec<String> = env::args().collect();
 

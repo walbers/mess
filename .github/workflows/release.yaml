@@ -7,7 +7,7 @@ on:
 
 jobs:
   publish-mess:
-    name: Build and publish mess
+    name: Build & publish
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
