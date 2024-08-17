@@ -23,9 +23,9 @@ fn get_mess_env_settings() -> HashMap<String, String> {
 
 
 fn get_settings() -> HashMap<String, String> {
-    let home_dir = env::var("HOME").unwrap();
+    let home_dir = env::var("HOME").expect("Failed to get home directory");
     let config_path = format!("{}/.config/mess", home_dir);
-    let conf = Ini::load_from_file(config_path).unwrap();
+    let conf = Ini::load_from_file(config_path).expect("Failed to load config file");
 
     // ~/.config/mess file settings
     let mut mess_settings: HashMap<String, String> = HashMap::new();
@@ -50,7 +50,7 @@ fn get_messengers(mess_variables: &HashMap<String, String>) -> Vec<String> {
         exit(1);
     }
 
-    let messengers_str =  mess_variables.get("MESSENGERS").unwrap();
+    let messengers_str =  mess_variables.get("MESSENGERS").expect("Failed to get messengers");
     let messengers: Vec<String> = messengers_str.split(',').map(|s| s.to_string().replace(" ", "")).collect();
     for messenger in &messengers {
         if !AVAILABLE_MESSENGERS.contains(&messenger.as_str()) {
@@ -67,7 +67,7 @@ fn get_duration_allowed(mess_variables: &HashMap<String, String>) -> u64 {
         exit(1);
     }
 
-    let duration_allowed_str = mess_variables.get("DURATION").unwrap();
+    let duration_allowed_str = mess_variables.get("DURATION").expect("Failed to get duration allowed");
     let duration_allowed = duration_allowed_str.parse::<u64>().unwrap_or_else(|e| {
         eprint!("Failed to parse DURATION to integer: {}", e);
         exit(1);
@@ -122,12 +122,11 @@ fn send_desktop_message(program_name: &String, duration: u64) {
 }
 
 async fn send_discord_message(program_name: &String, duration: u64, mess_settings: &HashMap<String, String>) {
-    let token = mess_settings.get("DISCORD_TOKEN").unwrap();
-    let channel_id = mess_settings.get("DISCORD_CHANNEL_ID").unwrap();
+    let token = mess_settings.get("DISCORD_TOKEN").expect("Failed to get Discord token");
+    let channel_id = mess_settings.get("DISCORD_CHANNEL_ID").expect("Failed to get Discord channel id");
     let message = format!("Your program {} has finished after {} minutes", program_name, duration);
-
     let http = SerenityHttp::new(&token);
-    let channel = ChannelId::new(channel_id.parse::<u64>().unwrap());
+    let channel = ChannelId::new(channel_id.parse::<u64>().expect("Failed to parse channel id"));
     match channel.say(&http, &message).await {
         Ok(message) => println!("Message sent to Discord: {:?}", message.content),
         Err(why) => eprintln!("Error sending message to Discord: {:?}", why),
@@ -135,10 +134,10 @@ async fn send_discord_message(program_name: &String, duration: u64, mess_setting
 }
 
 async fn send_text_message(program_name: &String, duration: u64, mess_settings: &HashMap<String, String>) {
-    let sender = mess_settings.get("TWILIO_SENDER").unwrap();
-    let receiver = mess_settings.get("TWILIO_RECEIVER").unwrap();
-    let account = mess_settings.get("TWILIO_ACCOUNT").unwrap();
-    let api_key = mess_settings.get("TWILIO_API_KEY").unwrap();
+    let sender = mess_settings.get("TWILIO_SENDER").expect("Failed to get Twilio sender");
+    let receiver = mess_settings.get("TWILIO_RECEIVER").expect("Failed to get Twilio receiver");
+    let account = mess_settings.get("TWILIO_ACCOUNT").expect("Failed to get Twilio account");
+    let api_key = mess_settings.get("TWILIO_API_KEY").expect("Failed to get Twilio api key");
     let message = format!("Your program {} has finished after {} minutes", program_name, duration);
 
     let form_data = [("To", receiver), ("From", sender), ("Body", &message)];
