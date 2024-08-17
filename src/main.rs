@@ -7,9 +7,15 @@ use ini::Ini;
 use serenity::http::Http as SerenityHttp;
 use serenity::model::id::ChannelId;
 use nix::sys::utsname::uname;
+use serde::{Deserialize, Serialize};
 
-const AVAILABLE_MESSENGERS: [&str; 4] = ["BEEP", "DESKTOP", "DISCORD", "TEXT"];
+const AVAILABLE_MESSENGERS: [&str; 5] = ["BEEP", "DESKTOP", "DISCORD", "TEXT", "SLACK"];
 
+#[derive(Serialize, Deserialize)]
+struct SlackMessage {
+    channel: String,
+    text: String,
+}
 
 fn get_mess_env_settings() -> HashMap<String, String> {
     let mut mess_variables: HashMap<String, String> = HashMap::new();
@@ -31,14 +37,14 @@ fn get_settings() -> HashMap<String, String> {
     let mut mess_settings: HashMap<String, String> = HashMap::new();
     for (_sec, prop) in &conf {
         for (key, value) in prop.iter() {
-            mess_settings.insert(key.to_string().to_uppercase(), value.to_string().to_uppercase());
+            mess_settings.insert(key.to_string().to_uppercase(), value.to_string());
         }
     }
 
     // Environment variables settings
     let env_settings = get_mess_env_settings();
     for (key, value) in env_settings {
-        mess_settings.insert(key.to_uppercase(), value.to_uppercase());
+        mess_settings.insert(key.to_uppercase(), value);
     }
 
     mess_settings
@@ -51,7 +57,7 @@ fn get_messengers(mess_variables: &HashMap<String, String>) -> Vec<String> {
     }
 
     let messengers_str =  mess_variables.get("MESSENGERS").expect("Failed to get messengers");
-    let messengers: Vec<String> = messengers_str.split(',').map(|s| s.to_string().replace(" ", "")).collect();
+    let messengers: Vec<String> = messengers_str.split(',').map(|s| s.to_string().replace(" ", "").to_uppercase()).collect();
     for messenger in &messengers {
         if !AVAILABLE_MESSENGERS.contains(&messenger.as_str()) {
             eprintln!("Messenger {} not available!", messenger);
@@ -133,6 +139,23 @@ async fn send_discord_message(program_name: &String, duration: u64, mess_setting
     }
 }
 
+async fn send_slack_message(program_name: &String, duration: u64, mess_settings: &HashMap<String, String>) {
+    let message = SlackMessage {
+        channel: mess_settings.get("SLACK_CHANNEL_ID").expect("Failed to get Slack channel").to_string(),
+        text: format!("Your program {} has finished after {} minutes", program_name, duration),
+    };
+    let slack_token = mess_settings.get("SLACK_BOT_TOKEN").
+        expect("Failed to get Slack token");
+    let slack_client = reqwest::Client::new();
+    let _res = slack_client.post("https://slack.com/api/chat.postMessage")
+        .bearer_auth(slack_token)
+        .json(&message)
+        .send()
+        .await;
+
+    // println!("Result {:?}", _res);
+}
+
 async fn send_text_message(program_name: &String, duration: u64, mess_settings: &HashMap<String, String>) {
     let sender = mess_settings.get("TWILIO_SENDER").expect("Failed to get Twilio sender");
     let receiver = mess_settings.get("TWILIO_RECEIVER").expect("Failed to get Twilio receiver");
@@ -143,14 +166,14 @@ async fn send_text_message(program_name: &String, duration: u64, mess_settings: 
     let form_data = [("To", receiver), ("From", sender), ("Body", &message)];
 
     let client = reqwest::Client::new();
-    let res = client.post(
+    let _res = client.post(
         format!("https://api.twilio.com/2010-04-01/Accounts/{}/Messages.json", account))
         .form(&form_data)
         // .body("the exact body that is sent")
         .basic_auth(account, Some(api_key))
         .send()
         .await;
-    println!("Result {:?}", res)
+    // println!("Result {:?}", res)
 }
 
 async fn send_message(program_name: &String, duration: u64, mess_settings: HashMap<String, String>) {
@@ -160,6 +183,7 @@ async fn send_message(program_name: &String, duration: u64, mess_settings: HashM
             "BEEP" => send_beep_message(),
             "DESKTOP" => send_desktop_message(&program_name, duration),
             "DISCORD" => send_discord_message(&program_name, duration, &mess_settings).await,
+            "SLACK" => send_slack_message(&program_name, duration, &mess_settings).await,
             "TEXT" => send_text_message(&program_name, duration, &mess_settings).await,
             _ => eprint!("The messenger {} doesn't exist. Skipping...", messenger),
         }
@@ -171,8 +195,10 @@ async fn main() {
     // collect arguements and settings
     let mut debug = false;
     let mess_settings = get_settings();
-    if mess_settings.get("DEBUG") == Some(&String::from("TRUE")) {
-        debug = true;
+    if let Some(v) = mess_settings.get("DEBUG") {
+        if v.to_uppercase() == "TRUE" {
+            debug = true;
+        }
     }
     let messengers = get_messengers(&mess_settings); // to check if messengers are valid
     let duration_allowed = get_duration_allowed(&mess_settings);
@@ -201,7 +227,7 @@ async fn main() {
 
     if duration.as_secs() >= duration_allowed { // TODO: *60
         send_message(&args_passed[1], duration.as_secs(), mess_settings).await;
-    } else {
+    } else if debug {
         println!("Execution was less than allowed duration. No message sent.");
     }
 }
