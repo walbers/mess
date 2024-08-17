@@ -32,7 +32,7 @@ function download_and_install() {
     fi
 
     echo "Extracting $tar_file..."
-    mkdir mess
+    mkdir -p mess
     tar -xzf "$tar_file" -C mess
 
     if [ $? -ne 0 ]; then
@@ -43,7 +43,7 @@ function download_and_install() {
     echo "Setting up files"
     chmod +x "$mess_file"
     sudo mv "$mess_file" "$INSTALL_DIR/"
-    mkdir ~/.mess
+    mkdir -p ~/.mess
     mv "$config_file" ~/.mess/config
 
     if [[ "$KERNEL" == *"WSL"* && "$ARCH" == "x86_64" ]]; then

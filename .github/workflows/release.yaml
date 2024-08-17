@@ -37,6 +37,7 @@ jobs:
           options: -v ${{ github.workspace }}:/home
           run: |
             cd /home
+            echo "Installing build dependencies"
             apt-get update
             apt-get install -y gcc-aarch64-linux-gnu
             rustup target add aarch64-unknown-linux-gnu
@@ -46,6 +47,7 @@ jobs:
             linker = "aarch64-linux-gnu-gcc"
             EOL
             cat .cargo/config.toml
+            echo "Building"
             cargo build --release --target aarch64-unknown-linux-gnu
       - name: Build
         if: matrix.architecture == 'x86_64'
@@ -82,6 +84,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: mess/install.sh
+          asset_path: install.sh
           asset_name: install.sh
           asset_content_type: application/x-sh
