@@ -32,14 +32,13 @@ Use it just like you would the `time` command
 - Desktop notifications
     - Uses linux's `notify-send`
     - Will work in WSL with [wsl-notify-send](https://github.com/stuartleeks/wsl-notify-send)
+- Beep
 - Text
-    - requires twilio API key
-
-### Future
-
-- Slack bot
-- Discord bot
-
+    - Requires twilio API key and phone numbers
+- Slack
+    - Requires a bot token with write permissions and a slack channel ID
+- Discord
+    - Requires bot token with write permissions and discord channel ID
 
 ## Building
 
