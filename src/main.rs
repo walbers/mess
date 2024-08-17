@@ -169,7 +169,6 @@ async fn send_text_message(program_name: &String, duration: u64, mess_settings: 
     let _res = client.post(
         format!("https://api.twilio.com/2010-04-01/Accounts/{}/Messages.json", account))
         .form(&form_data)
-        // .body("the exact body that is sent")
         .basic_auth(account, Some(api_key))
         .send()
         .await;
@@ -225,7 +224,7 @@ async fn main() {
         println!("Messengers: {:?}", messengers);
     }
 
-    if duration.as_secs() >= duration_allowed { // TODO: *60
+    if duration.as_secs() >= duration_allowed {
         send_message(&args_passed[1], duration.as_secs(), mess_settings).await;
     } else if debug {
         println!("Execution was less than allowed duration. No message sent.");
