@@ -58,7 +58,8 @@ jobs:
       - name: Package
         run: |
           mkdir -p output/${{ matrix.architecture }}-${{ matrix.os }}
-          strip target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess
+          ls target/${{ matrix.architecture }}-${{ matrix.os }}/release/
+          # strip target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess
           cp target/${{ matrix.architecture }}-${{ matrix.os }}/release/mess output/${{ matrix.architecture }}-${{ matrix.os }}
           cp config output/${{ matrix.architecture }}-${{ matrix.os }}
           tar czf output/mess-${{ matrix.architecture }}-${{ matrix.os }}-${{ github.ref_name }}.tar.gz -C output/${{ matrix.architecture }}-${{ matrix.os }} mess config
