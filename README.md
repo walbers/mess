@@ -8,7 +8,7 @@ By default it will send desktop notifications and not have any delay.
 
 ## Install
 
-`curl -fsSL https://github.com/walbers/mess/releases/download/latest/install.sh | bash`
+`bash -c "$(curl -fsSL https://github.com/walbers/mess/releases/download/<VERSION>/install.sh)"`
 
 ## Setup
 
@@ -62,4 +62,3 @@ Use it just like you would the `time` command
     unzip wsl-notify-send_windows_amd64.zip
     sudo cp wsl-notify-send.exe /usr/local/bin/notify-send
     ```
-

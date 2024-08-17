@@ -8,7 +8,7 @@ use serenity::http::Http as SerenityHttp;
 use serenity::model::id::ChannelId;
 use nix::sys::utsname::uname;
 
-const AVAILABLE_MESSENGERS: [&str; 4] = ["beep", "desktop", "discord", "text"];
+const AVAILABLE_MESSENGERS: [&str; 4] = ["BEEP", "DESKTOP", "DISCORD", "TEXT"];
 
 
 fn get_mess_env_settings() -> HashMap<String, String> {
@@ -27,16 +27,18 @@ fn get_settings() -> HashMap<String, String> {
     let config_path = format!("{}/.config/mess", home_dir);
     let conf = Ini::load_from_file(config_path).unwrap();
 
+    // ~/.config/mess file settings
     let mut mess_settings: HashMap<String, String> = HashMap::new();
     for (_sec, prop) in &conf {
         for (key, value) in prop.iter() {
-            mess_settings.insert(key.to_string(), value.to_string());
+            mess_settings.insert(key.to_string().to_uppercase(), value.to_string().to_uppercase());
         }
     }
 
+    // Environment variables settings
     let env_settings = get_mess_env_settings();
     for (key, value) in env_settings {
-        mess_settings.insert(key, value);
+        mess_settings.insert(key.to_uppercase(), value.to_uppercase());
     }
 
     mess_settings
@@ -156,10 +158,10 @@ async fn send_message(program_name: &String, duration: u64, mess_settings: HashM
     let messengers = get_messengers(&mess_settings);
     for messenger in messengers {
         match &messenger as &str {
-            "beep" => send_beep_message(),
-            "desktop" => send_desktop_message(&program_name, duration),
-            "discord" => send_discord_message(&program_name, duration, &mess_settings).await,
-            "text" => send_text_message(&program_name, duration, &mess_settings).await,
+            "BEEP" => send_beep_message(),
+            "DESKTOP" => send_desktop_message(&program_name, duration),
+            "DISCORD" => send_discord_message(&program_name, duration, &mess_settings).await,
+            "TEXT" => send_text_message(&program_name, duration, &mess_settings).await,
             _ => eprint!("The messenger {} doesn't exist. Skipping...", messenger),
         }
     }
@@ -167,14 +169,23 @@ async fn send_message(program_name: &String, duration: u64, mess_settings: HashM
 
 #[tokio::main]
 async fn main() {
-    // HANDLE case just `mess` or `mess --help --version and --test to make sure message works`
-
-
     // collect arguements and settings
+    let mut debug = false;
     let mess_settings = get_settings();
-    let _messengers = get_messengers(&mess_settings); // to check if messengers are valid
+    if mess_settings.get("DEBUG") == Some(&String::from("TRUE")) {
+        debug = true;
+    }
+    let messengers = get_messengers(&mess_settings); // to check if messengers are valid
     let duration_allowed = get_duration_allowed(&mess_settings);
     let args_passed: Vec<String> = env::args().collect();
+
+    if args_passed.len() == 1 {
+        let mess_version = env!("CARGO_PKG_VERSION");
+        println!("Mess version: {}", mess_version);
+        println!("Make sure to setup ~/.config/mess file check github.com/walbers/mess for more info");
+        println!("Usage: mess <program> <program-args>");
+        exit(0);
+    }
 
     // run the program
     let start = Instant::now();
@@ -182,9 +193,13 @@ async fn main() {
     let duration = start.elapsed();
 
     // send message
-    println!("-------------------");
-    println!("Duration: {:?}", duration);
-    println!("Duration allowed: {:?}", duration_allowed);
+    if debug {
+        println!("-------------------");
+        println!("Duration: {:?}", duration);
+        println!("Duration allowed: {:?}", duration_allowed);
+        println!("Messengers: {:?}", messengers);
+    }
+
     if duration.as_secs() >= duration_allowed { // TODO: *60
         send_message(&args_passed[1], duration.as_secs(), mess_settings).await;
     } else {

@@ -33,7 +33,7 @@ jobs:
         if: matrix.architecture == 'aarch64' && matrix.os == 'unknown-linux-gnu'
         uses: addnab/docker-run-action@v3
         with:
-          image: rust:latest
+          image: rust:1.77.2
           options: -v ${{ github.workspace }}:/home
           run: |
             cd /home
