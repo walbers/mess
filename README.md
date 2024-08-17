@@ -8,7 +8,7 @@ By default it will send desktop notifications and not have any delay.
 
 ## Install
 
-`bash -c "$(curl -fsSL https://github.com/walbers/mess/releases/download/<VERSION>/install.sh)"`
+`bash -c "$(curl -fsSL https://github.com/walbers/mess/releases/download/0.1.0/install.sh)"`
 
 ## Setup
 
