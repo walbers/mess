@@ -23,7 +23,7 @@ function wsl_notify_install() {
 function download_and_install() {
     local tar_file="$1.tar.gz"
     local mess_file="mess/mess"
-    local config_file="mess/mess.config"
+    local config_file="mess/config"
     echo "Downloading $tar_file..."
     curl -fsSL "$RELEASE_URL/$tar_file" -o "$tar_file"
     if [ $? -ne 0 ]; then
@@ -43,8 +43,8 @@ function download_and_install() {
     echo "Setting up files"
     chmod +x "$mess_file"
     sudo mv "$mess_file" "$INSTALL_DIR/"
-    mkdir -p ~/.mess
-    mv "$config_file" ~/.mess/config
+    mkdir -p ~/.config
+    mv "$config_file" ~/.config/mess
 
     if [[ "$KERNEL" == *"WSL"* && "$ARCH" == "x86_64" ]]; then
         read -p "Do you want to install wsl-notify-send to receive windows desktop notifcations from WSL? (y/n): " -n 1 -r
@@ -55,7 +55,7 @@ function download_and_install() {
     fi
 
     rm "$tar_file"
-    echo "Configure your ~/.mess/config file before using"
+    echo "Configure your ~/.config/mess file before using"
 }
 
 OS="$(uname -s)"

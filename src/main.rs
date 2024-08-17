@@ -6,8 +6,9 @@ use std::env;
 use ini::Ini;
 use serenity::http::Http as SerenityHttp;
 use serenity::model::id::ChannelId;
+use nix::sys::utsname::uname;
 
-const AVAILABLE_MESSENGERS: [&str; 3] = ["desktop", "discord", "text"];
+const AVAILABLE_MESSENGERS: [&str; 4] = ["beep", "desktop", "discord", "text"];
 
 
 fn get_mess_env_settings() -> HashMap<String, String> {
@@ -23,7 +24,7 @@ fn get_mess_env_settings() -> HashMap<String, String> {
 
 fn get_settings() -> HashMap<String, String> {
     let home_dir = env::var("HOME").unwrap();
-    let config_path = format!("{}/.mess/config", home_dir);
+    let config_path = format!("{}/.config/mess", home_dir);
     let conf = Ini::load_from_file(config_path).unwrap();
 
     let mut mess_settings: HashMap<String, String> = HashMap::new();
@@ -93,6 +94,21 @@ fn run_the_program(program_to_run: &[String]) {
     let _status = child.wait().expect("Command wasn't running");
 }
 
+fn send_beep_message() {
+    let uname = uname();
+    let kernel_name = uname.release();
+    if kernel_name.contains("WSL") {
+        Command::new("powershell.exe")
+        .arg("-c")
+        .arg("[console]::beep(1000, 500)")
+        .output()
+        .expect("Failed to execute command");
+    }
+    else {
+        print!("\x07");
+    }
+}
+
 fn send_desktop_message(program_name: &String, duration: u64) {
     let message = format!("Your program {} has finished after {} minutes", program_name, duration);
     let mut child = Command::new("notify-send")
@@ -142,6 +158,7 @@ async fn send_message(program_name: &String, duration: u64, mess_settings: HashM
     let messengers = get_messengers(&mess_settings);
     for messenger in messengers {
         match &messenger as &str {
+            "beep" => send_beep_message(),
             "desktop" => send_desktop_message(&program_name, duration),
             "discord" => send_discord_message(&program_name, duration, &mess_settings).await,
             "text" => send_text_message(&program_name, duration, &mess_settings).await,
@@ -153,6 +170,7 @@ async fn send_message(program_name: &String, duration: u64, mess_settings: HashM
 #[tokio::main]
 async fn main() {
     // HANDLE case just `mess` or `mess --help --version and --test to make sure message works`
+
 
     // collect arguements and settings
     let mess_settings = get_settings();
